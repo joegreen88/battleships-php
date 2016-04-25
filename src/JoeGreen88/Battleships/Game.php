@@ -257,7 +257,8 @@ class Game
      */
     protected function validateShipAvailabilityForPlacement($length)
     {
-        if (!array_key_exists($length, $this->numShips) or $this->numShips[$length] < 1) {
+        $numShips = $this->getNumShipsAwaitingPlacement();
+        if (!array_key_exists($length, $numShips) or $numShips[$length] < 1) {
             throw new \Exception("There are no ships of length $length available for placement");
         }
         return true;
