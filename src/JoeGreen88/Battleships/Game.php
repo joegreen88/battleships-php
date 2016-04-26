@@ -46,6 +46,26 @@ class Game
     protected $gameState = 0;
 
     /**
+     * @var string[] Map from game state (int) to a string representation of the state.
+     */
+    protected static $gameStates = [
+        0 => "Beginning",
+        1 => "Placing ships",
+        2 => "Game in progress",
+        3 => "Game won",
+    ];
+
+    /**
+     * @var int|null Keeps track of the last player to fire a shot.
+     */
+    protected $lastPlayerToShoot;
+
+    /**
+     * @var int|null Null until the game is won, at which point this property contains the number of the winning player.
+     */
+    protected $winner;
+
+    /**
      * Game constructor.
      *
      * @param int $numColumns Must be larger than 4.
@@ -73,6 +93,18 @@ class Game
         }
         $this->grid1->scalarValuesOnly(false);
         $this->grid2->scalarValuesOnly(false);
+    }
+
+    /**
+     * Get information about the state of the current game.
+     *
+     * @param bool $string Optional; false by default; set true to return a string instead of an int.
+     *
+     * @return int|string
+     */
+    public function getState($string = false)
+    {
+        return $string ? static::$gameStates[$this->gameState] : $this->gameState;
     }
 
     /**
@@ -249,6 +281,7 @@ class Game
         }
 
         $this->gameState = 1;
+        return $this;
     }
 
     /**
@@ -289,11 +322,11 @@ class Game
             throw new \Exception("The parameter \$orientation must take the value 'portrait' or 'landscape'");
         }
         $numColumns = $grid->info('columnCount');
-        if (!is_int($x) or $x < 0 or $x >= $numColumns or ('landscape' == $orientation && $x + $length >= $numColumns)) {
+        if (!is_int($x) or $x < 0 or $x >= $numColumns or ('landscape' == $orientation && $x + $length > $numColumns)) {
             throw new \Exception("Placement not valid - the entire ship does not fit within the grid");
         }
         $numRows = $grid->info('rowCount');
-        if (!is_int($y) or $y < 0 or $y >= $numRows or ('portrait' == $orientation && $y + $length >= $numRows)) {
+        if (!is_int($y) or $y < 0 or $y >= $numRows or ('portrait' == $orientation && $y + $length > $numRows)) {
             throw new \Exception("Placement not valid - the entire ship does not fit within the grid");
         }
         $coordinates = static::getCoordinates($x, $y, $length, $orientation);
@@ -347,5 +380,60 @@ class Game
         $this->activePlayer = 1;
         $this->gameState = 2;
         return $this;
+    }
+
+    /**
+     * Shoot at the given co-ordinates.
+     *
+     * @param int $x
+     * @param int $y
+     *
+     * @return boolean True if the shot was a hit, false otherwise.
+     *
+     * @throws \Exception If trying to shoot an invalid location, e.g. tile is out of bounds or has already been shot.
+     */
+    public function shoot($x, $y)
+    {
+        if (2 < $this->gameState) {
+            throw new \Exception("The game is won. The winner is player ".$this->winner);
+        }
+        if (2 > $this->gameState) {
+            throw new \Exception("You may not start shooting until the game is in progress");
+        }
+        if ($this->getActivePlayer() === $this->lastPlayerToShoot) {
+            throw new \Exception("You may not shoot twice in a row - it is the other player's turn");
+        }
+        if (!is_int($x) or !is_int($y) or $x < 0 or $y < 0) {
+            throw new \Exception("Parameters \$x and \$y must both be non-negative integers");
+        }
+        $tile = $this->getInactivePlayerGrid()->getValue($x, $y);
+        if ($tile instanceof Tile) {
+            if ($tile->isShot()) {
+                throw new \Exception("This target has already been shot");
+            }
+        } else {
+            $tile = new Tile($x, $y);
+            $this->getInactivePlayerGrid()->setValue($x, $y, $tile);
+        }
+        $tile->shoot();
+        $this->lastPlayerToShoot = $this->getActivePlayer();
+        if ($tile->isOccupied() && $this->isWinningHit()) {
+            $this->gameState = 3;
+            $this->winner = $this->getActivePlayer();
+        }
+        return $tile->isOccupied();
+    }
+
+    /**
+     * @return bool Return true if the opponent's ships have all been sunk, false otherwise.
+     */
+    protected function isWinningHit()
+    {
+        foreach ($this->getInactivePlayerShips() as $ship) {
+            if (!$ship->isSunk()) {
+                return false;
+            }
+        }
+        return true;
     }
 }

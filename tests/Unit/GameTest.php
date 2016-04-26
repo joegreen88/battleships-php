@@ -125,6 +125,21 @@ class GameTest extends PHPUnit_Framework_TestCase
     }
 
     /**
+     * Ensure that a ships can be placed such that they touch the far edge of the grid as long as they don't cross it.
+     */
+    public function testPlaceShipTouchingGridBorder()
+    {
+        $game = new \JoeGreen88\Battleships\Game(6, 6); // so grid keys from 0 to 5 inclusive
+        $game->setNumShips([5 => 1]);
+        $game->placeShip(5, 1, 5, 'portrait');
+        $this->assertSame(1, count($game->getActivePlayerShips()));
+        $this->assertSame(
+            [ [5, 1], [5, 2], [5, 3], [5, 4], [5, 5] ],
+            $game->getActivePlayerShips()[0]->getCoordinates()
+        );
+    }
+
+    /**
      * Make sure that we can get accurate information on the number of ships to be placed.
      */
     public function testGettingNumberOfShipsAvailableForPlacement()
@@ -138,9 +153,72 @@ class GameTest extends PHPUnit_Framework_TestCase
         $this->assertSame([2 => 1, 4 => 1], $game->getNumShipsAwaitingPlacement());
     }
 
-    public function testStartGame()
+    /**
+     * @return \JoeGreen88\Battleships\Game
+     */
+    protected function getNewGameInProgress()
     {
         $game = new \JoeGreen88\Battleships\Game;
+        // Player 1 ship placement
+        $game->placeShip(0, 0, 2, 'landscape');
+        $game->placeShip(0, 1, 3, 'portrait');
+        $game->placeShip(1, 4, 4, 'landscape');
+        $game->changeActivePlayer();
+        // Player 2 ship placement
+        $game->placeShip(4, 3, 2, 'portrait');
+        $game->placeShip(0, 1, 3, 'landscape');
+        $game->placeShip(1, 2, 4, 'landscape');
+        $game->changeActivePlayer();
+        // Start game
+        return $game->start();
+    }
 
+    /**
+     * Starting the game after all ships have been placed sets the gameState to 2 (game in progress).
+     */
+    public function testStartGame()
+    {
+        $game = $this->getNewGameInProgress();
+        $this->assertSame(2, $game->getState());
+        $this->assertSame("Game in progress", $game->getState(true));
+    }
+
+    /**
+     * Once the game proper has started we can begin firing shots.
+     */
+    public function testShootingBackAndForth()
+    {
+        $game = $this->getNewGameInProgress();
+
+        // miss
+        $this->assertFalse($game->shoot(3, 0));
+        $tile = $game->getInactivePlayerGrid()->getValue(3, 0);
+        $this->assertInstanceOf("\\JoeGreen88\\Battleships\\Tile", $tile);
+        $this->assertTrue($tile->isShot());
+        $this->assertFalse($tile->isOccupied());
+        $game->changeActivePlayer();
+
+        // miss
+        $this->assertFalse($game->shoot(3, 0));
+        $tile = $game->getInactivePlayerGrid()->getValue(3, 0);
+        $this->assertInstanceOf("\\JoeGreen88\\Battleships\\Tile", $tile);
+        $this->assertTrue($tile->isShot());
+        $this->assertFalse($tile->isOccupied());
+        $game->changeActivePlayer();
+
+        // hit
+        $this->assertTrue($game->shoot(4, 3));
+        $tile = $game->getInactivePlayerGrid()->getValue(4, 3);
+        $this->assertInstanceOf("\\JoeGreen88\\Battleships\\Tile", $tile);
+        $this->assertTrue($tile->isShot());
+        $this->assertTrue($tile->isOccupied());
+        $game->changeActivePlayer();
+
+        // hit
+        $this->assertTrue($game->shoot(0, 0));
+        $tile = $game->getInactivePlayerGrid()->getValue(0, 0);
+        $this->assertInstanceOf("\\JoeGreen88\\Battleships\\Tile", $tile);
+        $this->assertTrue($tile->isShot());
+        $this->assertTrue($tile->isOccupied());
     }
 }

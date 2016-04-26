@@ -128,6 +128,24 @@ class GameErrorsTest extends PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Exception
+     * @expectedExceptionMessage Cannot place ships once the game has started
+     */
+    public function testPlaceShipWhenGameAlreadyStarted()
+    {
+        $game = new \JoeGreen88\Battleships\Game;
+        $modifyGameState = \Closure::bind(
+            function() {
+                $this->gameState = 2;
+            },
+            $game,
+            $game
+        );
+        $modifyGameState();
+        $game->placeShip(0, 0, 3, 'portrait');
+    }
+
+    /**
+     * @expectedException \Exception
      * @expectedExceptionMessage The game cannot start until both players have placed all of their ships
      */
     public function testStartGameWhenShipsAwaitPlacement()
@@ -152,5 +170,44 @@ class GameErrorsTest extends PHPUnit_Framework_TestCase
         );
         $modifyGameState($game);
         $game->start();
+    }
+
+    /**
+     * @expectedException \Exception
+     * @expectedExceptionMessage You may not start shooting until the game is in progress
+     */
+    public function testShootWhenGameNotStarted()
+    {
+        $game = new \JoeGreen88\Battleships\Game;
+        $game->shoot(0, 0);
+    }
+
+    /**
+     * @expectedException \Exception
+     * @expectedExceptionMessage You may not shoot twice in a row - it is the other player's turn
+     */
+    public function testShootTwiceInARow()
+    {
+        $game = new \JoeGreen88\Battleships\Game;
+        $game->setNumShips([2 => 1]);
+        $game->placeShip(2, 2, 2, "portrait")->changeActivePlayer()->placeShip(2, 2, 2, "landscape");
+        $game->start();
+        $game->shoot(0, 0);
+        $game->shoot(1, 1);
+    }
+
+    /**
+     * @expectedException \Exception
+     * @expectedExceptionMessage This target has already been shot
+     */
+    public function testShootAtTargetThatHasAlreadyBeenShot()
+    {
+        $game = new \JoeGreen88\Battleships\Game;
+        $game->setNumShips([2 => 1]);
+        $game->placeShip(2, 2, 2, "portrait")->changeActivePlayer()->placeShip(2, 2, 2, "landscape");
+        $game->start();
+        $game->shoot(0, 0);
+        $game->changeActivePlayer()->shoot(0, 0);
+        $game->changeActivePlayer()->shoot(0, 0);
     }
 }
