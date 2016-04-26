@@ -198,12 +198,15 @@ class Game
     }
 
     /**
-     * @return array
+     * @param bool $activePlayer Optional; true by default. Set false to get information on the inactive player instead.
+     *
+     * @return array A Map from ship length to number of ships awaiting placement.
      */
-    public function getNumShipsAwaitingPlacement()
+    public function getNumShipsAwaitingPlacement($activePlayer = true)
     {
         $numShips = $this->numShips;
-        foreach ($this->getActivePlayerShips() as $ship) {
+        $ships = $activePlayer ? $this->getActivePlayerShips() : $this->getInactivePlayerShips();
+        foreach ($ships as $ship) {
             $length = $ship->getLength();
             if (array_key_exists($length, $numShips)) {
                 --$numShips[$length];
@@ -324,10 +327,25 @@ class Game
         return $coordinates;
     }
 
-
-
+    /**
+     * Call this method once all ships have been placed.
+     *
+     * This method puts the game into state 2 and sets the active player to player 1.
+     *
+     * @return static
+     *
+     * @throws \Exception
+     */
     public function start()
     {
-        throw new \Exception("Not implemented yet");
+        if (1 < $this->gameState) {
+            throw new \Exception("The game has already started");
+        }
+        if (count($this->getNumShipsAwaitingPlacement(true)) or count($this->getNumShipsAwaitingPlacement(false))) {
+            throw new \Exception("The game cannot start until both players have placed all of their ships");
+        }
+        $this->activePlayer = 1;
+        $this->gameState = 2;
+        return $this;
     }
 }

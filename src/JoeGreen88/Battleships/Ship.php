@@ -163,4 +163,20 @@ class Ship
         }
         return $this->isSunk;
     }
+
+    /**
+     * @return int A rounded percentage illustrating the number of the ship's tiles that have been shot.
+     */
+    public function getPercentageHit()
+    {
+        $tiles = $this->getTiles();
+        $denominator = count($tiles);
+        $numerator = 0;
+        foreach ($tiles as $tile) {
+            if ($tile->isShot()) {
+                $numerator++;
+            }
+        }
+        return (int) round(($numerator * 100) / $denominator);
+    }
 }
