@@ -33,6 +33,7 @@ class GameTest extends PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Exception
+     * @expectedExceptionMessage The number of columns must be an integer larger than 4
      */
     public function testInvalidGridInitialisation()
     {
@@ -68,6 +69,7 @@ class GameTest extends PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Exception
+     * @expectedExceptionMessage The param $numShips must map positive integers to positive integers
      */
     public function testSettingInvalidNumberOfShips()
     {
@@ -77,6 +79,7 @@ class GameTest extends PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Exception
+     * @expectedExceptionMessage Too many ships specified - they would cover the entire grid!
      */
     public function testSettingNumberOfShipsTooLargeForGrid()
     {
@@ -90,6 +93,7 @@ class GameTest extends PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Exception
+     * @expectedExceptionMessage Invalid number of ships given - no ship of length 12 will fit on the grid!
      */
     public function testSettingNumberOfShipsWithShipsTooLongForGrid()
     {
@@ -99,6 +103,7 @@ class GameTest extends PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Exception
+     * @expectedExceptionMessage The param $numShips must not be empty
      */
     public function testSettingNumberOfShipsWithZeroShips()
     {
@@ -139,6 +144,7 @@ class GameTest extends PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Exception
+     * @expectedExceptionMessage Placement not valid - the entire ship does not fit within the grid
      */
     public function testPlaceShipCompletelyOutOfBounds()
     {
@@ -148,20 +154,12 @@ class GameTest extends PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Exception
+     * @expectedExceptionMessage Placement not valid - the entire ship does not fit within the grid
      */
     public function testPlaceShipPartiallyOutOfBounds()
     {
         $game = new \JoeGreen88\Battleships\Game; // 5 x 5 grid by default
         $game->placeShip(4, 4, 3, 'landscape');
-    }
-
-    /**
-     * @expectedException \Exception
-     */
-    public function testPlaceShipThatIsNotAvailableForPlacement()
-    {
-        $game = new \JoeGreen88\Battleships\Game;
-        $game->placeShip(0, 0, 5, 'landscape');
     }
 
     /**
@@ -196,6 +194,7 @@ class GameTest extends PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Exception
+     * @expectedExceptionMessage Placement not valid - overlapping another ship at point (0, 0)
      */
     public function testPlaceShipOverlappingAnotherShip()
     {
@@ -218,11 +217,36 @@ class GameTest extends PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \Exception
+     * @expectedExceptionMessage Cannot specify the number of ships - ship placement has already begun
      */
     public function testSetNumShipsAfterShipPlacementHasBegun()
     {
         $game = new \JoeGreen88\Battleships\Game;
         $game->placeShip(0, 0, 3, 'landscape');
         $game->setNumShips([3 => 5]);
+    }
+
+    /**
+     * @expectedException \Exception
+     * @expectedExceptionMessage There are no ships of length 5 available for placement
+     */
+    public function testPlaceShipWhenNoneAreAvailableForPlacement()
+    {
+        $game = new \JoeGreen88\Battleships\Game;
+        $game->placeShip(0, 0, 5, 'landscape');
+    }
+
+    /**
+     * @expectedException \Exception
+     * @expectedExceptionMessage There are no ships of length 3 available for placement
+     */
+    public function testPlaceTwoShipsWhenOnlyOneIsAvailableForPlacement()
+    {
+        $game = new \JoeGreen88\Battleships\Game;
+        $game->setNumShips([2 => 2, 3 => 1, 4 => 2]);
+        // this first one will succeed, there is one 3-ship available for placement
+        $game->placeShip(0, 1, 3, 'landscape');
+        // this second one will fail as the only 3-ship has already been placed above
+        $game->placeShip(0, 0, 3, 'landscape');
     }
 }
