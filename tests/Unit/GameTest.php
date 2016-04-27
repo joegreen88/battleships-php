@@ -221,4 +221,31 @@ class GameTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($tile->isShot());
         $this->assertTrue($tile->isOccupied());
     }
+
+    /**
+     * When a player shoots all of the opponents ships down then the game should change state automatically.
+     */
+    public function testWinningTheGame()
+    {
+        $game = $this->getNewGameInProgress();
+        $targets = [ // these are all of the locations of player 2's ships.. the perfect game from player 1 :-)
+            [4,3], [4,4],
+            [0,1], [1,1], [2,1],
+            [1,2], [2,2], [3,2], [4,2],
+        ];
+        // player 1 has ships in different locations, so use the same shots for both players and player 1 will win
+        while (count($targets)) {
+            $this->assertSame(2, $game->getState());
+            list($x, $y) = array_shift($targets);
+            $game->shoot($x, $y);
+            if (!count($targets)) {
+                break;
+            }
+            $game->changeActivePlayer();
+            $game->shoot($x, $y);
+            $game->changeActivePlayer();
+        }
+        $this->assertSame(3, $game->getState());
+        $this->assertSame(1, $game->getWinner());
+    }
 }
