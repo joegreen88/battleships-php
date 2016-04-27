@@ -66,6 +66,22 @@ class Game
     protected $winner;
 
     /**
+     * @var array An array of score data
+     */
+    protected $score = [
+        1 => [
+            'shots' => 0,
+            'hits' => 0,
+            'kills' => 0
+        ],
+        2 => [
+            'shots' => 0,
+            'hits' => 0,
+            'kills' => 0
+        ]
+    ];
+
+    /**
      * Game constructor.
      *
      * @param int $numColumns Must be larger than 4.
@@ -105,6 +121,14 @@ class Game
     public function getState($string = false)
     {
         return $string ? static::$gameStates[$this->gameState] : $this->gameState;
+    }
+
+    /**
+     * @return array An array of scoring data for this game.
+     */
+    public function getScore()
+    {
+        return $this->score;
     }
 
     /**
@@ -417,9 +441,16 @@ class Game
         }
         $tile->shoot();
         $this->lastPlayerToShoot = $this->getActivePlayer();
-        if ($tile->isOccupied() && $this->isWinningHit()) {
-            $this->gameState = 3;
-            $this->winner = $this->getActivePlayer();
+        $this->score[$this->getActivePlayer()]['shots']++;
+        if ($tile->isOccupied()) {
+            $this->score[$this->getActivePlayer()]['hits']++;
+            if ($tile->getShip()->isSunk()) {
+                $this->score[$this->getActivePlayer()]['kills']++;
+                if ($this->isWinningHit()) {
+                    $this->gameState = 3;
+                    $this->winner = $this->getActivePlayer();
+                }
+            }
         }
         return $tile->isOccupied();
     }
