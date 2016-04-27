@@ -210,4 +210,23 @@ class GameErrorsTest extends PHPUnit_Framework_TestCase
         $game->changeActivePlayer()->shoot(0, 0);
         $game->changeActivePlayer()->shoot(0, 0);
     }
+
+    /**
+     * @expectedException \Exception
+     * @expectedExceptionMessage The game is won. The winner is player 2
+     */
+    public function testShootWhenGameWon()
+    {
+        $game = new \JoeGreen88\Battleships\Game;
+        $modifyGameState = \Closure::bind(
+            function() {
+                $this->gameState = 3;
+                $this->winner = 2;
+            },
+            $game,
+            $game
+        );
+        $modifyGameState($game);
+        $game->shoot(0, 0);
+    }
 }
