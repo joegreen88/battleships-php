@@ -254,4 +254,37 @@ class GameTest extends PHPUnit_Framework_TestCase
         $this->assertSame(3, $game->getState());
         $this->assertSame(1, $game->getWinner());
     }
+
+    /**
+     * Walk through some game actions and make sure the score tracking is on point throughout.
+     */
+    public function testScoreTracking()
+    {
+        $game = $this->getNewGameInProgress();
+        $score = [
+            1 => [
+                'shots' => 0,
+                'hits' => 0,
+                'kills' => 0
+            ],
+            2 => [
+                'shots' => 0,
+                'hits' => 0,
+                'kills' => 0
+            ]
+        ];
+        $this->assertTrue($score === $game->getScore());
+
+        // hit
+        $game->shoot(4, 3); ++$score[1]['shots']; ++$score[1]['hits'];
+        $this->assertTrue($score === $game->getScore());
+
+        // miss
+        $game->changeActivePlayer()->shoot(0, 4); ++$score[2]['shots'];
+        $this->assertTrue($score === $game->getScore());
+
+        // hit, sink
+        $game->changeActivePlayer()->shoot(4, 4); ++$score[1]['shots']; ++$score[1]['hits']; ++$score[1]['kills'];
+        $this->assertTrue($score === $game->getScore());
+    }
 }
