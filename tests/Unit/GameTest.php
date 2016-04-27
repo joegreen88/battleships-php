@@ -105,6 +105,9 @@ class GameTest extends PHPUnit_Framework_TestCase
 
         $game->placeShip(0, 0, 4, 'portrait');
         $this->assertSame(1, count($game->getActivePlayerShips()));
+        foreach ($game->getActivePlayerShips() as $ship) {
+            $this->assertInstanceOf("\\JoeGreen88\\Battleships\\Ship", $ship);
+        }
         $this->assertInstanceOf("\\JoeGreen88\\Battleships\\Tile", $game->getActivePlayerGrid()->getValue(0, 0));
         /** @var \JoeGreen88\Battleships\Tile $tile */
         $tile = $game->getActivePlayerGrid()->getValue(0, 0);
@@ -115,6 +118,9 @@ class GameTest extends PHPUnit_Framework_TestCase
 
         $game->placeShip(0, 4, 3, 'landscape');
         $this->assertSame(2, count($game->getActivePlayerShips()));
+        foreach ($game->getActivePlayerShips() as $ship) {
+            $this->assertInstanceOf("\\JoeGreen88\\Battleships\\Ship", $ship);
+        }
         $this->assertInstanceOf("\\JoeGreen88\\Battleships\\Tile", $game->getActivePlayerGrid()->getValue(2, 4));
         /** @var \JoeGreen88\Battleships\Tile $tile */
         $tile = $game->getActivePlayerGrid()->getValue(2, 4);
