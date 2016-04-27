@@ -436,4 +436,12 @@ class Game
         }
         return true;
     }
+
+    /**
+     * @return int|null
+     */
+    public function getWinner()
+    {
+        return $this->winner;
+    }
 }
